@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>My Web Page</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body,
+        html {
+            height: 100%;
+            margin: 0;
+        }
+
+        .container {
+            height: 100%;
+            width: 100%;
+            display: flex;
+        }
+
+        .left-div {
+            width: 15%;
+            background-color: red;
+            /* Just for visualization */
+        }
+
+        .right-div {
+            width: 85%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message-panel {
+            height: 93%;
+            background-color: blue;
+            /* Just for visualization */
+        }
+
+        .input-container {
+            display: flex;
+            padding: 10px;
+            height: 7%;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 5px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .send-button {
+            padding: 5px 10px;
+            margin-left: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff; /* Use desired background color */
+            color: #fff; /* Use desired text color */
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .conversation-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .contact {
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+    <!-- // Setup go wasm -->
+    <script src="wasm_exec.js"></script>
+	<script>
+		if (!WebAssembly.instantiateStreaming) { // polyfill
+			WebAssembly.instantiateStreaming = async (resp, importObject) => {
+				const source = await (await resp).arrayBuffer();
+				return await WebAssembly.instantiate(source, importObject);
+			};
+        }
+		const go = new Go();
+		let mod, inst;
+		WebAssembly.instantiateStreaming(fetch("main.wasm"), go.importObject).then((result) => {
+			inst = result.instance;
+            go.run(inst);
+		}).catch((err) => {
+			console.error(err);
+		});
+	</script>
+    <!-- // Run app code -->
+    <script type="module", src="app.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="left-div">
+            <ul class="conversation-list">
+              <li class="contact">Contact 1</li>
+              <li class="contact">Contact 2</li>
+              <li class="contact">Contact 3</li>
+            </ul>
+        </div>
+        <div class="right-div">
+            <div class="message-panel"></div>
+            <div class="input-container">
+                <input type="text" class="message-input" placeholder="Type your message...">
+                <button class="send-button">Send</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>
+
