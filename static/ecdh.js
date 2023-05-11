@@ -1,3 +1,6 @@
+import { ECDH_SERV } from "./constants";
+
+
 export class KeyPairLocker extends KeyLocker {
     constructor(name) {
         super("KeyPairLocker")
@@ -46,6 +49,36 @@ class KeyLocker {
     }
 }
 
+
+async function initiateExchange(b64KeyUserA) {
+    const reqJSON = {k: b64KeyUserA};
+    const options = {method: "POST", body: JSON.stringify(reqJSON)};
+    const respJSON = await request(options);
+    const exchangeUUID = respJSON.e;
+    return exchangeUUID;
+}
+
+
+async function swapExchangeKeys(exchangeUUID, keyUserB) {
+    const reqJSON = {e: exchangeUUID, b: keyUserB};
+    const options = {method: "PATCH", body: JSON.stringify(reqJSON)};
+    const respJSON = await request(options)
+    const b64KeyUserA = respJSON.a
+    return b64KeyUserA;
+}
+
+async function completeExchange(exchangeUUID) {
+    const reqJSON = {u: exchangeUUID};
+    const options = {method: "DELETE", body: JSON.stringify(reqJSON)};
+    const respJSON = await request(options)
+    const b64KeyUserB = respJSON.b;
+    return b64KeyUserB;
+}
+
+async function request(options) {
+    const resp = await fetch(ECDH_SERV.url + "/", options);
+    return await resp.json();
+}
 
 function newPrivateKey() {
 	return wasm.ecdh.newPrivateKey()

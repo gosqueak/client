@@ -35,9 +35,6 @@ export const {
     },
     ECDH_SERV: {
         url: "http://0.0.0.0:8083",
-        endpoints: {
-            prekeys: "/prekeys"
-        },
         jwtAudStr: "ECDHSERVICE"
     },
     EVENT: {
