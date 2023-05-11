@@ -41,7 +41,6 @@ export const {
         jwtAudStr: "ECDHSERVICE"
     },
     EVENT: {
-        encryptedMessage: "em",
-        conversationRequest: "cr"
+        ecdhNotification: "en",
     },
 };

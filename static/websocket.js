@@ -3,11 +3,12 @@ import * as auth from "./auth.js";
 
 const eventHandlers = {};
 
-// add a function to handle a certain socket event type name
-// the handler function should be a void function of SocketEvent body object
 export function setHandler(typeName, handler) {
+    // add a function to handle a certain socket event type name
+    // the handler function should be a void function of SocketEvent body object
     eventHandlers[typeName] = handler;
 }
+
 
 export async function getSock() {
     // status code errors should be handled by callers
@@ -15,42 +16,52 @@ export async function getSock() {
 
     const url = "ws://" + MSG_SERV.url + MSG_SERV.endpoints.ws;
 
-    const ws = new WebSocket(url, jwtStr);
-
-    ws.onmessage(e => {
-        const socketEvent = SocketEvent.fromJSON(JSON.parse(e.data));
-        const bodyJSON = JSON.parse(socketEvent.body);
-        eventHandlers[socketEvent.typeName](bodyJSON);
-    });
-
-    ws.onclose(e => {
-        `server sent close event ${e}`
-    });
-
-    return ws;
+    return new WebSocket(url, jwtStr);
 }
 
-export function sendEvent(ws, eventTypeName, bodyObj) {
-    const event = new SocketEvent(eventTypeName, JSON.stringify(bodyObj));
-    ws.send(JSON.stringify(event))
-}
+
+// export function sendEvent(ws, eventTypeName, bodyObj) {
+//     const event = new SocketEvent(eventTypeName, JSON.stringify(bodyObj));
+//     ws.send(JSON.stringify(event))
+// }
+
 
 class SocketEvent {
-    constructor(typeName, bodyStr) {
+    constructor(typeName, toUserId, fromUserId, body) {
         this.typeName = typeName;
-        this.bodyStr = bodyStr;
+        this.toUserId = toUserId;
+        this.fromUserId = fromUserId;
+        this.body = body;
     }
 
     // used by JSON module to serialize
     toJSON() {
         return {
             t: this.typeName,
-            b: this.bodyStr
+            tu: this.toUserId,
+            fu: this.fromUserId,
+            b: this.body
         };
     }
 
     static fromJSON(json) {
-        return new SocketEvent(json.t, json.b);
+        return new SocketEvent(json.t, json.tu, json.fu, json.b);
     }
 }
 
+
+class ECDHNotification {
+    constructor(exchangeUUID) {
+        this.exchangeUUID = exchangeUUID;
+    }
+
+    toJSON() {
+        return {
+          e: this.exchangeUUID  
+        };
+    }
+
+    static fromJSON(json) {
+        return new ECDHNotification(json.e)
+    }
+}
