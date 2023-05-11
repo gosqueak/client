@@ -6,4 +6,4 @@ build_wasm:
 	GOOS=js GOARCH=wasm go build -o ./static/main.wasm ./go_wasm/main.go
 
 # Default target
-all: build_go download_wasm
+all: build_go build_wasm
