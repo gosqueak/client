@@ -4,8 +4,6 @@ WORKDIR /app
 
 COPY . .
 
-WORKDIR /app/cmd
+RUN make all
 
-RUN go build -o main .
-
-CMD ["./main"]
+CMD ["./cmd/main"]
