@@ -7,3 +7,4 @@ build_wasm:
 
 # Default target
 all: build_go build_wasm
+dev: build_wasm
