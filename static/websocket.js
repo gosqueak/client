@@ -1,4 +1,5 @@
-import { MSG_SERV } from "./constants.js";
+
+import { ALAKAZAM, EVENT } from "./constants.js";
 import * as auth from "./auth.js";
 
 const eventHandlers = {};
@@ -12,26 +13,21 @@ export function setHandler(typeName, handler) {
 
 export async function getSock() {
     // status code errors should be handled by callers
-    await auth.requestApiToken(MSG_SERV.jwtAudStr);
+    await auth.requestApiToken(ALAKAZAM.jwtAudStr);
+    return new WebSocket("ws://" + ALAKAZAM.url + ALAKAZAM.endpoints.ws);
+}
 
-    const url = "ws://" + MSG_SERV.url + MSG_SERV.endpoints.ws;
-
-    return new WebSocket(url, jwtStr);
+export function sendEvent(ws, socketEvent) {
+    ws.send(JSON.stringify(socketEvent))
 }
 
 
-// export function sendEvent(ws, eventTypeName, bodyObj) {
-//     const event = new SocketEvent(eventTypeName, JSON.stringify(bodyObj));
-//     ws.send(JSON.stringify(event))
-// }
-
-
-class SocketEvent {
-    constructor(typeName, toUserId, fromUserId, body) {
+export class SocketEvent {
+    constructor(typeName, toUserId, fromUserId, bodyObject) {
         this.typeName = typeName;
         this.toUserId = toUserId;
         this.fromUserId = fromUserId;
-        this.body = body;
+        this.body = JSON.stringify(bodyObject);
     }
 
     // used by JSON module to serialize

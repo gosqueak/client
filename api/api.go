@@ -15,7 +15,7 @@ func NewServer() *Server {
 
 func (s *Server) Run(addr string) {
 	handleServeFile := http.FileServer(http.Dir("../static")).ServeHTTP
-	http.HandleFunc("/", kit.LogMiddleware(kit.CorsMiddleware(handleServeFile)))
+	http.HandleFunc("/", kit.LogMiddleware(handleServeFile))
 
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		panic(err)

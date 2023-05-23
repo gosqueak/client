@@ -16,7 +16,6 @@ form.addEventListener("submit", async function (event) {
     // catch http error codes from login request
     try {
         await passwordLogin(user, pass);
-        location.replace(STATIC_SERV.url + STATIC_SERV.endpoints.app);
     } catch (error) {
         if (error.status == 401) {
             alert("Incorrect username or password");

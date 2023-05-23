@@ -52,7 +52,7 @@ class KeyLocker {
 
 async function initiateExchange(b64KeyUserA) {
     const reqJSON = {k: b64KeyUserA};
-    const options = {method: "POST", body: JSON.stringify(reqJSON)};
+    const options = {method: "POST", credentials: "include", body: JSON.stringify(reqJSON)};
     const respJSON = await request(options);
     const exchangeUUID = respJSON.e;
     return exchangeUUID;
@@ -61,7 +61,7 @@ async function initiateExchange(b64KeyUserA) {
 
 async function swapExchangeKeys(exchangeUUID, keyUserB) {
     const reqJSON = {e: exchangeUUID, b: keyUserB};
-    const options = {method: "PATCH", body: JSON.stringify(reqJSON)};
+    const options = {method: "PATCH", credentials: "include", body: JSON.stringify(reqJSON)};
     const respJSON = await request(options)
     const b64KeyUserA = respJSON.a
     return b64KeyUserA;
@@ -69,7 +69,7 @@ async function swapExchangeKeys(exchangeUUID, keyUserB) {
 
 async function completeExchange(exchangeUUID) {
     const reqJSON = {u: exchangeUUID};
-    const options = {method: "DELETE", body: JSON.stringify(reqJSON)};
+    const options = {method: "DELETE", credentials: "include", body: JSON.stringify(reqJSON)};
     const respJSON = await request(options)
     const b64KeyUserB = respJSON.b;
     return b64KeyUserB;

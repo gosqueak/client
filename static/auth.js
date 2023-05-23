@@ -1,11 +1,11 @@
 
-import { AUTH_SERV } from "./constants.js";
+import { STEELIX } from "./constants.js";
 
 export async function requestApiToken(audienceNameStr) {
     // TODO clean input
-    const url = AUTH_SERV.url + AUTH_SERV.endpoints.apitokens + `?aud=${audienceNameStr}`;
+    const url = STEELIX.protocol + STEELIX.url + STEELIX.endpoints.apitokens + `?aud=${audienceNameStr}`;
 
-    const response = await fetch(url, { method: "GET" });
+    const response = await fetch(url, { method: "GET", credentials: "include"});
 
     if (!response.ok) {
         throw { status: response.status }
@@ -13,10 +13,11 @@ export async function requestApiToken(audienceNameStr) {
 }
 
 export async function passwordLogin(username, password) {
-    const url = AUTH_SERV.url + AUTH_SERV.endpoints.login;
+    const url = STEELIX.protocol + STEELIX.url + STEELIX.endpoints.login;
 
     const response = await fetch(url, {
         method: "POST",
+        credentials: "include",
         body: JSON.stringify(
             { username: username, password: password }
         )
@@ -28,9 +29,9 @@ export async function passwordLogin(username, password) {
 }
 
 export async function logout() {
-    const url = AUTH_SERV.url + AUTH_SERV.endpoints.logout;
+    const url = STEELIX.protocol + STEELIX.url + STEELIX.endpoints.logout;
 
-    const response = await fetch(url, { method: "POST" });
+    const response = await fetch(url, { method: "POST", credentials: "include" });
 
     if (!response.ok) {
         throw { status: response.status };
@@ -38,7 +39,7 @@ export async function logout() {
 }
 
 export async function register(username, password) {
-    const url = AUTH_SERV.url + AUTH_SERV.endpoints.register;
+    const url = STEELIX.protocol + STEELIX.url + STEELIX.endpoints.register;
 
     const response = await fetch(url, {
         method: "POST",

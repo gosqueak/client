@@ -8,14 +8,11 @@ form.addEventListener("submit", async function(event) {
     const username = document.getElementById("username");
     const password = document.getElementById("password");
 
-    const user = username.value;
-    const pass = password.value;
-
-    username.value = password.value = "";
-
+    
     try {
-        await register(user, pass);
-        location.replace(STATIC_SERV.url + STATIC_SERV.endpoints.login);
+        await register(username.value, password.value);
+        username.value = password.value = "";
+        location.replace(STATIC_SERV.protocol + STATIC_SERV.url + STATIC_SERV.endpoints.login);
     } catch (error) {
         if (error.status == 409) {
             alert("That username got snagged already!");

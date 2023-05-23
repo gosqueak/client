@@ -1,22 +1,23 @@
 
 export const {
     STATIC_SERV,
-    AUTH_SERV,
-    MSG_SERV,
-    ECDH_SERV,
+    STEELIX,
+    ALAKAZAM,
+    KLEFKI,
     EVENT
 } = {
     STATIC_SERV: {
-        url: "http://0.0.0.0:8080",
+        protocol: "http://",
+        url: "localhost:8080",
         endpoints: {
-            app: "/app.html",
-            login: "/login.html",
-            register: "/register.html",
+            app: "/app",
+            login: "/login",
+            register: "/register",
         },
-        jwtAudStr: "WEBSERVICE"
     },
-    AUTH_SERV: {
-        url: "http://0.0.0.0:8081",
+    STEELIX: {
+        protocol: "http://",
+        url: "localhost:8081",
         endpoints: {
             apitokens: "/apitokens",
             accesstokens: "/accesstokens",
@@ -24,18 +25,20 @@ export const {
             register: "/register",
             logout: "/logout",
         },
-        jwtAudStr: "AUTHSERVICE"
+        jwtAudStr: "steelix"
     },
-    MSG_SERV: {
-        url: "http://0.0.0.0:8082",
+    ALAKAZAM: {
+        protocol: "http://",
+        url: "localhost:8083",
         endpoints: {
             ws: "/ws"
         },
-        jwtAudStr: "MSGSERVICE"
+        jwtAudStr: "alakazam"
     },
-    ECDH_SERV: {
-        url: "http://0.0.0.0:8083",
-        jwtAudStr: "ECDHSERVICE"
+    KLEFKI: {
+        protocol: "http://",
+        url: "localhost:8082",
+        jwtAudStr: "klefki"
     },
     EVENT: {
         ecdhNotification: "en",
