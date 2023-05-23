@@ -75,35 +75,31 @@ class App extends UIWidget {
     }
 }
 
-// used in main
+// // used in main
 var ws, app, sendButton, messageInput
 
-// async function main() {
-//     // try connecting to the ws server or return to login page
-//     try {
-//         ws = await websocket.getSock();
-//     } catch (err) {
-//         if (err.status == 401) {
-//             location.replace(STATIC_SERV.url + STATIC_SERV.endpoints.login);
-//         } else {
-//             throw err;
-//         }
-//     }
+async function main() {
+    // try connecting to the ws server or return to login page
+    try {
+        ws = await websocket.getSock();
+    } catch (err) {
+        if (err.status == 401) {
+            location.replace(STATIC_SERV.url + STATIC_SERV.endpoints.login);
+        } else {
+            throw err;
+        }
+    }
 
-//     app = new App(ws);
-    
-//     sendButton = document.querySelector('.send-button');
-//     messageInput = document.querySelector('.message-input');
-//     sendButton.addEventListener('click', async function (evt) {
-//         // Get the value of the messageInput
-//         var message = messageInput.value;
-        
-//         alert('You typed: ' + message);
-        
-//         messageInput.value = "";
-//     })
+    app = new App(ws);
 
-//     app.keepUpdatingDOM()
-// }
+    sendButton = document.querySelector('.send-button');
+    messageInput = document.querySelector('.message-input');
 
-// main();
+    sendButton.addEventListener('click', async function (evt) {
+        messageInput.value = "";
+    })
+
+    app.keepUpdatingDOM()
+}
+
+main();
