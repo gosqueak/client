@@ -5,31 +5,40 @@ import (
 	"syscall/js"
 )
 
+var ret = map[string]string{
+	"res":   "",
+	"error": "",
+}
+
 func main() {
-	enc := base64.StdEncoding
+	b64 := base64.StdEncoding
+
 	ecdh := map[string]any{
 		"newPrivateKey": js.FuncOf(func(this js.Value, args []js.Value) any {
-			b := newPrivateKey()
-			return enc.EncodeToString(b)
+			b, err := NewPrivateKey()
+
+			ret["res"] = b64.EncodeToString(b)
+			ret["error"] = err.Error()
+			return ret
 		}),
 		"publicKey": js.FuncOf(func(this js.Value, args []js.Value) any {
-			privateKey, _ := enc.DecodeString(args[0].String())
-			return enc.EncodeToString(publicKey(privateKey))
+			privateKey, _ := b64.DecodeString(args[0].String())
+
+			b, err := PublicKey(privateKey)
+
+			ret["res"] = b64.EncodeToString(b)
+			ret["error"] = err.Error()
+			return ret
 		}),
 		"mixKeys": js.FuncOf(func(this js.Value, args []js.Value) any {
-			privateKey, _ := enc.DecodeString(args[0].String())
-			publicKey, _ := enc.DecodeString(args[1].String())
-			return enc.EncodeToString(mixKeys(privateKey, publicKey))
-		}),
-		"encryptString": js.FuncOf(func(this js.Value, args []js.Value) any {
-			s := args[0].String()
-			secretKey, _ := enc.DecodeString(args[1].String())
-			return encryptString(s, secretKey)
-		}),
-		"decryptString": js.FuncOf(func(this js.Value, args []js.Value) any {
-			s := args[0].String()
-			secretKey, _ := enc.DecodeString(args[1].String())
-			return decryptString(s, secretKey)
+			privateKey, _ := b64.DecodeString(args[0].String())
+			publicKey, _ := b64.DecodeString(args[1].String())
+
+			b, err := MixKeys(privateKey, publicKey)
+
+			ret["res"] = b64.EncodeToString(b)
+			ret["error"] = err.Error()
+			return ret
 		}),
 	}
 
@@ -41,4 +50,4 @@ func main() {
 
 	// block here so that process does not end (needed for calling go funcs from js)
 	<-make(chan any, 0)
-} 
+}
