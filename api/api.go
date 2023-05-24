@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	kit "github.com/gosqueak/apikit"
+	middlew "github.com/gosqueak/apikit/middleware"
 )
 
 var contentTypes = map[string]string{
@@ -22,7 +23,7 @@ func NewServer() *Server {
 }
 
 func (s *Server) Run(addr string) {
-	http.HandleFunc("/", kit.LogMiddleware(s.handleServeStaticfile))
+	http.HandleFunc("/", middlew.Log(s.handleServeStaticfile))
 
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		panic(err)
