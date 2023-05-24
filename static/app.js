@@ -71,7 +71,7 @@ class App extends UIWidget {
     }
     keepUpdatingDOM() {
         this.updateDOM();
-        requestAnimationFrame(this.keepUpdatingDOM)
+        requestAnimationFrame(this.keepUpdatingDOM.bind(this))
     }
 }
 
