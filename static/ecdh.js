@@ -1,101 +1,82 @@
 import { ECDH_SERV } from "./constants";
 
-
-export class KeyPairLocker extends KeyLocker {
-    constructor(name) {
-        super("KeyPairLocker")
+async function request(method, body) {
+    ECDH_SERV.protocol + ECDH_SERV.url + "/"
+    
+    const options = {
+        credentials: "include", // needed for cookies to be sent
+        method: method,
+        body: JSON.stringify(body),
     }
-
-    add(id, privateKey, publicKey) {
-        this.keys[id] = {private: privateKey, public: publicKey}
-        this._save()
-    }
-}
-
-
-class KeyLocker {
-    constructor(name) {
-        this.name = name;
-        this.keys = {};
-        this._localStorageKey = `KeyLockerKeys(${this.name})`
-        this._load()
-    }
-
-    add() {
-        throw new SyntaxError("not implemented")
-    }
-
-    get(id) {
-        return this.keys[id]
-    }
-
-    delete(id) {
-        delete this.keys[id]
-        this._save()
-    }
-
-    _save() {
-        localStorage.setItem(this._localStorageKey, JSON.stringify(this.keys))
-    }
-
-    _load() {
-        const keys = JSON.parse(localStorage.getItem(this._localStorageKey))
-
-        if (keys === null) {
-            return
-        }
-
-        this.keys = keys
-    }
-}
-
-
-async function initiateExchange(b64KeyUserA) {
-    const reqJSON = {k: b64KeyUserA};
-    const options = {method: "POST", credentials: "include", body: JSON.stringify(reqJSON)};
-    const respJSON = await request(options);
-    const exchangeUUID = respJSON.e;
-    return exchangeUUID;
-}
-
-
-async function swapExchangeKeys(exchangeUUID, keyUserB) {
-    const reqJSON = {e: exchangeUUID, b: keyUserB};
-    const options = {method: "PATCH", credentials: "include", body: JSON.stringify(reqJSON)};
-    const respJSON = await request(options)
-    const b64KeyUserA = respJSON.a
-    return b64KeyUserA;
-}
-
-async function completeExchange(exchangeUUID) {
-    const reqJSON = {u: exchangeUUID};
-    const options = {method: "DELETE", credentials: "include", body: JSON.stringify(reqJSON)};
-    const respJSON = await request(options)
-    const b64KeyUserB = respJSON.b;
-    return b64KeyUserB;
-}
-
-async function request(options) {
-    const resp = await fetch(ECDH_SERV.url + "/", options);
+    const resp = await fetch(endpointURL, options);
     return await resp.json();
 }
 
-function newPrivateKey() {
-	return wasm.ecdh.newPrivateKey()
+// see go_wasm/main.go for available functions
+export function callGo(goFunc, ...args) {
+    const { res, error } = goFunc(...args)
+    checkAndThrowGoError(error)
+    return res
 }
 
-function publicKey(privateKey) {
-	return wasm.ecdh.publicKey(privateKey)
+function checkAndThrowGoError(errorString) {
+    if (error !== "") {
+        throw new Error("Error in go wasm:" + error)
+    }
 }
 
-function mixKeys(privateKey, publicKey) {
-	return wasm.ecdh.mixKeys(privateKey, publicKey)
+class ExchangeExecutor {
+    constructor(b64privateKey) {
+        this.b64privateKey = b64privateKey;
+        this.exchangeID = "";
+        this.b64PublicKeyUserA = "";
+        this.b64PublicKeyUserB = "";
+    }
 }
 
-function encryptString(s, secretKey) {
-	return wasm.ecdh.encryptString(s, secretKey)
+class InitiatingExecutor extends ExchangeExecutor {
+    constructor(b64PrivateKeyUserA) {
+        super(b64PrivateKeyUserA)
+        this.b64PublicKeyUserA = callGo(wasm.ecdh.publicKey, b64PrivateKeyUserA);
+    }
+
+    async initiateExchange() {
+        const body = { k: this.b64PublicKeyUserA };
+        const resp = await request("POST", body);
+
+        this.exchangeID = resp.e;
+    }
+
+    async completeExchange() {
+        const body = { u: this.exchangeID };
+        const resp = await request("DELETE", body)
+        this.b64PublicKeyUserB = resp.b;
+    }
 }
 
-function decryptString(s , secretKey) {
-	return wasm.ecdh.decryptString(s, secretKey)
+class RespondingExecutor extends ExchangeExecutor {
+    constructor(exchangeID, b64PrivateKeyUserB) {
+        super(b64PrivateKeyUserB)
+        this.exchangeID = exchangeID;
+        this.b64PublicKeyUserB = callGo(wasm.ecdh.publicKey, b64PrivateKeyUserB);
+    }
+
+    async swapExchangeKeys(keyExchangeID, b64PublicKeyUserB) {
+        const body = { e: keyExchangeID, b: b64PublicKeyUserB };
+        const resp = await request("PATCH", body)
+        
+        this.b64PublicKeyUserA = resp.a;
+    }
+}
+
+class ExchangeExecutorManager {
+    constructor() {
+        
+    }
+}
+
+class KeyManager {
+    constructor() {
+        
+    }
 }

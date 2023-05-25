@@ -1,5 +1,16 @@
 package main
 
+// This is the file that should be compiled into the WASM binary.
+
+// Adapts Go functions to JS functions. Creates a global "wasm"
+// object in JS that organizes wasm functions.
+
+// JS example: const { res, error } = wasm.ecdh.mixKeys(a, b)
+
+// Return values are converted to an appropriate JS value.
+// An error string will be returned by all called wasm functions.
+// an empty error string indicates no error
+
 import (
 	"encoding/base64"
 	"syscall/js"
