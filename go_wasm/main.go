@@ -25,6 +25,8 @@ func main() {
 	b64 := base64.StdEncoding
 
 	ecdh := map[string]any{
+		// Parameters:
+		// Result: private key as base64 string
 		"newPrivateKey": js.FuncOf(func(this js.Value, args []js.Value) any {
 			b, err := NewPrivateKey()
 
@@ -32,6 +34,8 @@ func main() {
 			ret["error"] = err.Error()
 			return ret
 		}),
+		// Parameters: privateKey as base64 string
+		// Result: public key as base64 string
 		"publicKey": js.FuncOf(func(this js.Value, args []js.Value) any {
 			privateKey, _ := b64.DecodeString(args[0].String())
 
@@ -41,6 +45,8 @@ func main() {
 			ret["error"] = err.Error()
 			return ret
 		}),
+		// Parameters: private key and external  public key as base64 strings
+		// Result: base64 string shared secret
 		"mixKeys": js.FuncOf(func(this js.Value, args []js.Value) any {
 			privateKey, _ := b64.DecodeString(args[0].String())
 			publicKey, _ := b64.DecodeString(args[1].String())
