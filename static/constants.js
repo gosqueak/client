@@ -4,7 +4,6 @@ export const {
     STEELIX,
     ALAKAZAM,
     KLEFKI,
-    EVENT
 } = {
     STATIC_SERV: {
         protocol: "http://",
@@ -38,9 +37,9 @@ export const {
     KLEFKI: {
         protocol: "http://",
         url: "localhost:8082",
-        jwtAudStr: "klefki"
-    },
-    EVENT: {
-        ecdhNotification: "en",
+        jwtAudStr: "klefki",
+        endpoints: {
+            "/": "/ws"
+        },
     },
 };
