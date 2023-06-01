@@ -16,13 +16,16 @@ import (
 	"syscall/js"
 )
 
-var ret = map[string]string{
-	"res":   "",
-	"error": "",
+var b64 = base64.StdEncoding
+
+func retVal(b64Result string, err error) map[string]string {
+	return map[string]string{
+		"res": b64Result,
+		"err": err.Error(),
+	}
 }
 
 func main() {
-	b64 := base64.StdEncoding
 
 	ecdh := map[string]any{
 		// Parameters:
@@ -30,9 +33,7 @@ func main() {
 		"newPrivateKey": js.FuncOf(func(this js.Value, args []js.Value) any {
 			b, err := NewPrivateKey()
 
-			ret["res"] = b64.EncodeToString(b)
-			ret["error"] = err.Error()
-			return ret
+			return retVal(b64.EncodeToString(b), err)
 		}),
 		// Parameters: privateKey as base64 string
 		// Result: public key as base64 string
@@ -41,10 +42,9 @@ func main() {
 
 			b, err := PublicKey(privateKey)
 
-			ret["res"] = b64.EncodeToString(b)
-			ret["error"] = err.Error()
-			return ret
+			return retVal(b64.EncodeToString(b), err)
 		}),
+
 		// Parameters: private key and external  public key as base64 strings
 		// Result: base64 string shared secret
 		"mixKeys": js.FuncOf(func(this js.Value, args []js.Value) any {
@@ -53,9 +53,25 @@ func main() {
 
 			b, err := MixKeys(privateKey, publicKey)
 
-			ret["res"] = b64.EncodeToString(b)
-			ret["error"] = err.Error()
-			return ret
+			return retVal(b64.EncodeToString(b), err)
+		}),
+
+		"passwordEncrypt": js.FuncOf(func(this js.Value, args []js.Value) any {
+			b, _ := b64.DecodeString(args[0].String())
+			pswd, _ := b64.DecodeString(args[1].String())
+
+			ciphertext, err := PasswordEncrypt(b, pswd)
+
+			return retVal(b64.EncodeToString(ciphertext), err)
+		}),
+
+		"passwordDecrypt": js.FuncOf(func(this js.Value, args []js.Value) any {
+			ciphertext, _ := b64.DecodeString(args[0].String())
+			pswd, _ := b64.DecodeString(args[1].String())
+
+			plaintext, err := PasswordDecrypt(ciphertext, pswd)
+
+			return retVal(b64.EncodeToString(plaintext), err)
 		}),
 	}
 
