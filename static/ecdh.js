@@ -1,4 +1,5 @@
 import { KLEFKI } from "./constants";
+import { callGo } from "./wasm_exec";
 
 class ExchangeExecutor {
     constructor() {
@@ -9,7 +10,7 @@ class ExchangeExecutor {
 
         this.exchangeID = "";
         this.pubKeyOtherB64 = "";
-        this.sharedSecret = "";
+        this.sharedSecretB64 = "";
     }
 
     toJSON() {
@@ -25,9 +26,14 @@ class ExchangeExecutor {
         return Object.assign(executor, object);
     }
 
+    keySet() {
+        // returns the current keyset, some values may be unset (if the exhcange isnt complete)
+        return { secret: this.privB64, public: this.pubKeyB64, shared: this.sharedSecretB64 };
+    }
+
     _generateKeys() {
-        this.privB64 = callGo(wasm.ecdh.newPrivateKey);
-        this.pubKeyB64 = callGo(wasm.ecdh.publicKey, this.privB64);
+        this.privB64 = callGo(window.wasm.ecdh.newPrivateKey);
+        this.pubKeyB64 = callGo(window.wasm.ecdh.publicKey, this.privB64);
 
         return this;
     }
@@ -40,7 +46,7 @@ class ExchangeExecutor {
             throw new Error("the executor is missing a private key");
         }
 
-        this.sharedSecret = callGo(wasm.ecdh.mixKeys, this.privB64, this.pubKeyOtherB64);
+        this.sharedSecretB64 = callGo(window.wasm.ecdh.mixKeys, this.privB64, this.pubKeyOtherB64);
 
         return this;
     }
@@ -64,7 +70,7 @@ export class UserA extends ExchangeExecutor {
         this._mixECDH();
 
         this.isComplete = true;
-        return this;
+        return this.keySet();
     }
 
     async _initiateExchange() {
@@ -96,7 +102,7 @@ export class UserB extends ExchangeExecutor {
         this._mixECDH();
 
         this.isComplete = true;
-        return this;
+        return this.keySet();
     }
 
     async _keyForKey() {
@@ -104,63 +110,6 @@ export class UserB extends ExchangeExecutor {
         const resp = await API("PATCH", body);
 
         this.pubKeyOtherB64 = resp.a;
-    }
-}
-
-export class SecretManager {
-    constructor(password, storageKey) {
-        // Map of id to secret object
-        this._secretWrappers = new Map();
-        this._password = password;
-        this._storageKey = storageKey;
-    }
-
-    // add a secret json object. Set the isSessionOnly flag to ensure
-    //  the secret is treated as session-only. The secret should never be persisted on disk if
-    //  the isSessionOnly flag is set.
-    putSecret(id, secretObject, isSessionOnly) {
-        const secretWrapper = { isSessionOnly, secretObject }
-        this._secretWrappers.set(id, secretWrapper)
-    }
-
-    getSecret(id) {
-        const secretWrapper = this._secretWrappers.get(id);
-
-        if (secretWrapper === undefined) {
-            throw new Error(`no secret item with id in map: '${id}'`);
-        }
-
-        return secretWrapper.secretObject;
-    }
-
-    deleteSecret(id) {
-        delete this._secretWrappers[id]
-    }
-
-    saveLS() {
-        const entries = [...this._secretWrappers.entries()]
-                        .filter( ([ id, wrapper ]) => !wrapper.isSessionOnly );
-        const ciphertext = encryptObject(this._password, entries)
-        localStorage.setItem(this._storageKey, ciphertext);
-    }
-
-    deleteLS() {
-        localStorage.removeItem(this._storageKey);
-    }
-
-    static fromLocalStorage(password, storageKey) {
-        const mngr = new SecretManager(password, storageKey);
-
-        const ciphertext = localStorage.getItem(mngr._storageKey);
-        if (ciphertext === null) {
-            return mngr;  // there is no localstorage, so return fresh manager
-        };
-
-        const decryptedEntries = decryptObject(this.password, ciphertext);
-        
-        for (let [ id, wrapper ] of decryptedEntries ) {
-            mngr.putSecret(id, wrapper.secret, false)
-        };
     }
 }
 
@@ -174,17 +123,4 @@ async function API(method, body) {
     };
     const resp = await fetch(endpointURL, options);
     return await resp.json();
-}
-
-// see go_wasm/main.go for available functions
-export function callGo(goFunc, ...args) {
-    const { res, error } = goFunc(...args);
-    checkAndThrowGoError(error);
-    return res;
-}
-
-function checkAndThrowGoError(errorString) {
-    if (error !== "") {
-        throw new Error("Error in go wasm: " + error)
-    };
 }
