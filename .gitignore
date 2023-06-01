@@ -19,3 +19,9 @@
 
 # Go workspace file
 go.work
+
+# npm
+node_modules/
+
+#eslint
+*.eslint*
