@@ -1,63 +1,72 @@
+import { Envelope } from "./models.js"
 
-import { ALAKAZAM, EVENT } from "./constants.js";
-import * as auth from "./auth.js";
-
-const eventHandlers = {};
-
-export function setHandler(typeName, handler) {
-    // add a function to handle a certain socket event type name
-    // the handler function should be a void function of SocketEvent body object
-    eventHandlers[typeName] = handler;
-}
-
-
-export async function getSock() {
-    // status code errors should be handled by callers
-    await auth.requestApiToken(ALAKAZAM.jwtAudStr);
-    return new WebSocket("ws://" + ALAKAZAM.url + ALAKAZAM.endpoints.ws);
-}
-
-export function sendEvent(ws, socketEvent) {
-    ws.send(JSON.stringify(socketEvent))
-}
-
-
-export class SocketEvent {
-    constructor(typeName, toUserId, fromUserId, bodyObject) {
-        this.typeName = typeName;
-        this.toUserId = toUserId;
-        this.fromUserId = fromUserId;
-        this.body = JSON.stringify(bodyObject);
+export class SocketWrapper extends EventTarget {
+    constructor(url, keySets) {
+        super();
+        this.url = url;
+        this._ws = null;
+        this.keySets = keySets;
     }
 
-    // used by JSON module to serialize
-    toJSON() {
-        return {
-            t: this.typeName,
-            tu: this.toUserId,
-            fu: this.fromUserId,
-            b: this.body
-        };
+    // override to show this name instead of 'EventTarget'
+    get [Symbol.toStringTag]() {
+        return this.constructor.name;
     }
 
-    static fromJSON(json) {
-        return new SocketEvent(json.t, json.tu, json.fu, json.b);
+    async connect() {
+        const ws = new WebSocket(this.url);
+
+        ws.onopen(() => {
+            console.log("ws connection opened");
+        });
+        ws.onclose(() => {
+            console.log("ws connection closed");
+        });
+        ws.onerror(ev => console.log(`ws error: ${ev.data}`));
+
+        ws.onmessage(ev => {
+            let json;
+            try {
+                json = JSON.parse(ev.data);
+            } catch (e) {
+                console.warn("error parsing JSON string: " + e.message);
+                return;
+            }
+
+            let envelope;
+            try {
+                envelope = Envelope(json);
+            } catch (e) {
+                console.warn("error creating Envelope: " + e.message);
+                return;
+            }
+
+            if (envelope.isEncrypted) {
+                try {
+                    envelope.decrypt(this.keySets.get(envelope.fromUserID).shared);
+                } catch (e) {
+                    console.warn("failed to decrypt envelope due to an error: " + e.message);
+                    return;
+                }
+            }
+
+            const event = new CustomEvent(envelope.typeName, {envelope: envelope});
+            this.dispatchEvent(event);
+        });
+
+        this._ws = ws;
     }
-}
 
+    async send(envelope, encryptEnvelope) {
+        if (encryptEnvelope ?? false) {
+            try {
+                envelope.encrypt(this.keySets.get(envelope.toUserID).shared);
+            } catch (e) {
+                console.warn("could not encrypt envelope due to an error: " + e.message);
+                return;
+            }
+        }
 
-class ECDHNotification {
-    constructor(exchangeUUID) {
-        this.exchangeUUID = exchangeUUID;
-    }
-
-    toJSON() {
-        return {
-          e: this.exchangeUUID  
-        };
-    }
-
-    static fromJSON(json) {
-        return new ECDHNotification(json.e)
+        this._ws.send(JSON.stringify(envelope));
     }
 }
