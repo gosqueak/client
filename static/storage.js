@@ -2,14 +2,14 @@ import { callGo } from "./wasm_exec";
 
 export function encrypter(password) {
     return object => {
-        const ciphertextB64 = callGo(wasm.ecdh.passwordEncrypt, btoa(JSON.stringify(object)), btoa(password));
+        const ciphertextB64 = callGo(window.wasm.ecdh.passwordEncrypt, btoa(JSON.stringify(object)), btoa(password));
         return ciphertextB64;
     }
 }
 
 export function decrypter(password) {
     return ciphertextB64 => {
-        const plaintextB64 = callGo(wasm.ecdh.passwordDecrypt, ciphertextB64, btoa(password));
+        const plaintextB64 = callGo(window.wasm.ecdh.passwordDecrypt, ciphertextB64, btoa(password));
         return JSON.parse(atob(plaintextB64));
     }
 }
@@ -74,7 +74,7 @@ export class LocalStorage {
         if (data === null) {
             data = "[]";
             this._putStr("_manifest", data);
-        };
+        }
 
         this._manifest = new Set(JSON.parse(data));
     }
