@@ -1,8 +1,23 @@
+"use strict";
+
+// see go_wasm/main.go for available functions
+export function callGo(goFunc, ...args) {
+    const { res, err } = goFunc(...args);
+    checkAndThrowGoError(err);
+    return res;
+}
+
+function checkAndThrowGoError(errString) {
+    if (errString !== "") {
+        throw new Error("Error in go wasm: " + errString)
+    };
+}
+
+
 // Copyright 2018 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-"use strict";
 
 (() => {
 	const enosys = () => {
