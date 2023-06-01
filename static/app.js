@@ -1,7 +1,8 @@
 import { ALAKAZAM } from "./constants.js";
-import { SecretStorage, decrypter, encrypter } from "./storage.js";
+import { SecretStorage, decrypter, encrypter } from "./serial.js";
 import { SocketWrapper } from "./websocket.js";
-import { Message, EcdhStart, EcdhEnd, Conversations } from "./models.js";
+import { Message, EcdhStart, EcdhEnd } from "./models.js";
+import { Conversations } from "./viewmodels.js";
 import { requestApiToken } from "./auth.js";
 
 

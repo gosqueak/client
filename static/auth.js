@@ -52,5 +52,5 @@ export async function register(username, password) {
 
     if (!response.ok) {
         throw { status: response.status };
-    };
+    }
 }
