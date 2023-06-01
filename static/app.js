@@ -1,105 +1,40 @@
-import { STATIC_SERV } from "./constants.js";
-import * as websocket from "./websocket.js";
+import { ALAKAZAM } from "./constants.js";
+import { SecretStorage, decrypter, encrypter } from "./storage.js";
+import { SocketWrapper } from "./websocket.js";
+import { Message, EcdhStart, EcdhEnd, Conversations } from "./models.js";
+import { requestApiToken } from "./auth.js";
 
-class UIWidget {
-    constructor(domElem) {
-        this.domElem = domElem;
-        // array of UIWidget
-        this.children = [];
-    }
 
-    updateDOM() {
-        for (const child of this.children) {
-            child.updateDOM();
-        };
-    }
+async function getSock(keyStorage) {
+    const ws = SocketWrapper("ws://" + ALAKAZAM.url + ALAKAZAM.endpoints.ws, keyStorage);
+
+    ws.addEventListener(EcdhStart.name, envelope => {
+        
+    });
+    ws.addEventListener(EcdhEnd.name, envelope => {
+        
+    });
+    ws.addEventListener(Message.name, envelope => {
+        console.log(envelope.body);
+    });
+
+    // Alakzam requires an API token cookie to get a ws connection.
+    await requestApiToken(ALAKAZAM.jwtAudStr);
+    await ws.connect();
+
+    return ws;
 }
-
-class UIConversationList extends UIWidget {
-    constructor(domElem, app) {
-        super(domElem)
-        this.app = app;
-        this.conversations = {};
-    }
-
-    updateDOM() {
-        super.updateDOM()
-    }
-}
-
-class UIMessagePanel extends UIWidget {
-    constructor(domElem, app) {
-        super(domElem)
-        this.app = app;
-        this.conversations = [];
-    }
-
-    setCurrentConversation(conversation) {
-        this._currentConversation = conversation;
-    }
-
-    getCurrentConversation() {
-        return this._currentConversation;
-    }
-
-    updateDOM() {
-        super.updateDOM()
-    }
-}
-
-// used by conversation list and message panel
-export class Conversation {
-    constructor(id) {
-        this.messages = [];
-    }
-}
-
-class App extends UIWidget {
-    constructor(ws) {
-        super(document.documentElement);
-        this.ws = ws;
-
-        this.conversations = {}; // convoId: Conversation
-
-        this.children.push(new UIConversationList(
-            document.querySelector("conversation-list"), this
-        ))
-
-        this.children.push(new UIMessagePanel(
-            document.querySelector("message-panel"), this
-        ))
-    }
-    keepUpdatingDOM() {
-        this.updateDOM();
-        requestAnimationFrame(this.keepUpdatingDOM.bind(this))
-    }
-}
-
-// // used in main
-var ws, app, sendButton, messageInput
 
 async function main() {
-    // try connecting to the ws server or return to login page
-    try {
-        ws = await websocket.getSock();
-    } catch (err) {
-        if (err.status == 401) {
-            location.replace(STATIC_SERV.url + STATIC_SERV.endpoints.login);
-        } else {
-            throw err;
-        }
-    }
+    const user = window.loggedInUser;
+    const [encrypt, decrypt] = [encrypter(user.password), decrypter(user.password)];
 
-    app = new App(ws);
+    const EcdhExecutors = new SecretStorage("gosqueak_ecdh_executors", encrypt, decrypt); // for uncompleted exchanges
+    const keysetStorage = new SecretStorage("gosqueak_ecdh_keysets", encrypt, decrypt); // keysets from complete exchanges
+    const ws = await getSock(keysetStorage);
+    const conversations = new Conversations();
 
-    sendButton = document.querySelector('.send-button');
-    messageInput = document.querySelector('.message-input');
-
-    sendButton.addEventListener('click', async function (evt) {
-        messageInput.value = "";
-    })
-
-    app.keepUpdatingDOM()
+    await new Promise(() => {})
 }
 
 main();
