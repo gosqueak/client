@@ -26,6 +26,8 @@ export async function passwordLogin(username, password) {
     if (!response.ok) {
         throw { status: response.status };
     }
+
+    return (await response.json()).userID;
 }
 
 export async function logout() {
